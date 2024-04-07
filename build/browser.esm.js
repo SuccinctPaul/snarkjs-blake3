@@ -872,8 +872,8 @@ class BigMemFile {
     }
 }
 
-const O_TRUNC = 1024;
-const O_CREAT = 512;
+const O_TRUNC = 512;
+const O_CREAT = 64;
 const O_RDWR = 2;
 const O_RDONLY = 0;
 
@@ -10629,8 +10629,8 @@ var jsSha3 = sha3.exports;
 */
 const { keccak256 } = jsSha3;
 
-const POLYNOMIAL = 0;
-const SCALAR = 1;
+const POLYNOMIAL$1 = 0;
+const SCALAR$1 = 1;
 
 class Keccak256Transcript {
     constructor(curve) {
@@ -10645,11 +10645,11 @@ class Keccak256Transcript {
     }
 
     addPolCommitment(polynomialCommitment) {
-        this.data.push({type: POLYNOMIAL, data: polynomialCommitment});
+        this.data.push({type: POLYNOMIAL$1, data: polynomialCommitment});
     }
 
     addScalar(scalar) {
-        this.data.push({type: SCALAR, data: scalar});
+        this.data.push({type: SCALAR$1, data: scalar});
     }
 
     getChallenge() {
@@ -10660,13 +10660,13 @@ class Keccak256Transcript {
         let nPolynomials = 0;
         let nScalars = 0;
 
-        this.data.forEach(element => POLYNOMIAL === element.type ? nPolynomials++ : nScalars++);
+        this.data.forEach(element => POLYNOMIAL$1 === element.type ? nPolynomials++ : nScalars++);
 
         let buffer = new Uint8Array(nScalars * this.Fr.n8 + nPolynomials * this.G1.F.n8 * 2);
         let offset = 0;
 
         for (let i = 0; i < this.data.length; i++) {
-            if (POLYNOMIAL === this.data[i].type) {
+            if (POLYNOMIAL$1 === this.data[i].type) {
                 this.G1.toRprUncompressed(buffer, offset, this.data[i].data);
                 offset += this.G1.F.n8 * 2;
             } else {
@@ -14074,6 +14074,144 @@ async function fflonkSetup(r1csFilename, ptauFilename, zkeyFilename, logger) {
     }
 }
 
+/**
+ * Default hash length, in bytes, unless otherwise specified.
+ */
+const defaultHashLength = 32;
+/**
+ * Converts the input to an Uint8Array.
+ * @hidden
+ */
+const inputToArray = (input) => input instanceof Uint8Array ? input : new Uint8Array(input);
+
+// A small collection of encodings for convenience of use in the browser.
+const decoder = new TextDecoder();
+const encoders = {
+    // certainly not the fastest, but hashes are pretty small
+    base64: data => btoa(String.fromCharCode(...data)),
+    hex: data => {
+        let out = '';
+        for (const byte of data) {
+            if (byte < 0x10) {
+                out += '0';
+            }
+            out += byte.toString(16);
+        }
+        return out;
+    },
+    utf8: data => decoder.decode(data),
+};
+/**
+ * @hidden
+ */
+const mustGetEncoder = (encoding) => {
+    const encoder = encoders[encoding];
+    if (!encoder) {
+        throw new Error(`Unknown encoding ${encoding}`);
+    }
+    return encoder;
+};
+
+/**
+ * Hash returned from functions in the browser.
+ */
+class Hash extends Uint8Array {
+    /**
+     * A constant-time comparison against the other hash/array.
+     */
+    equals(other) {
+        if (!(other instanceof Uint8Array)) {
+            return false;
+        }
+        if (other.length !== this.length) {
+            return false;
+        }
+        let cmp = 0;
+        for (let i = 0; i < this.length; i++) {
+            cmp |= this[i] ^ other[i];
+        }
+        return cmp === 0;
+    }
+    toString(encoding = 'hex') {
+        return mustGetEncoder(encoding)(this);
+    }
+}
+
+/**
+ * Gets the webassembly module provided in provideWasm.
+ */
+const getWasm = () => {
+    {
+        throw new Error('BLAKE3 webassembly not loaded. Please import the module via `blake3/browser` or `blake3/browser-async`');
+    }
+};
+
+const textEncoder = new TextEncoder();
+/**
+ * @hidden
+ */
+const normalizeInput = (input) => inputToArray(typeof input === 'string' ? textEncoder.encode(input) : input);
+/**
+ * Returns a blake3 hash of the input.
+ */
+function hash(input, { length = defaultHashLength } = {}) {
+    const result = new Hash(length);
+    getWasm().hash(normalizeInput(input), result);
+    return result;
+}
+
+const POLYNOMIAL = 0;
+const SCALAR = 1;
+
+class Blake3Transcript {
+    constructor(curve) {
+        this.G1 = curve.G1;
+        this.Fr = curve.Fr;
+
+        this.reset();
+    }
+
+    reset() {
+        this.data = [];
+    }
+
+    addPolCommitment(polynomialCommitment) {
+        this.data.push({type: POLYNOMIAL, data: polynomialCommitment});
+    }
+
+    addScalar(scalar) {
+        this.data.push({type: SCALAR, data: scalar});
+    }
+
+    getChallenge() {
+        if(0 === this.data.length) {
+            throw new Error("Blake3Transcript: No data to generate a transcript");
+        }
+
+        let nPolynomials = 0;
+        let nScalars = 0;
+
+        this.data.forEach(element => POLYNOMIAL === element.type ? nPolynomials++ : nScalars++);
+
+        // modification: use the compressed representation
+        let buffer = new Uint8Array(nScalars * this.Fr.n8 + nPolynomials * this.G1.F.n8);
+        let offset = 0;
+
+        for (let i = 0; i < this.data.length; i++) {
+            if (POLYNOMIAL === this.data[i].type) {
+                this.G1.toRprCompressed(buffer, offset, this.data[i].data);
+                offset += this.G1.F.n8;
+            } else {
+                this.Fr.toRprBE(buffer, offset, this.data[i].data);
+                offset += this.Fr.n8;
+            }
+        }
+
+        const value = Scalar.fromRprBE(hash(buffer));
+        return this.Fr.e(value);
+    }
+}
+
 /*
     Copyright 2022 iden3 association.
 
@@ -14570,7 +14708,7 @@ async function fflonkProve(zkeyFileName, witnessFileName, logger) {
         // STEP 2.1 - Compute permutation challenge beta and gamma ∈ F
         // Compute permutation challenge beta
         if (logger) logger.info("> Computing challenges beta and gamma");
-        const transcript = new Keccak256Transcript(curve);
+        const transcript = new Blake3Transcript(curve);
 
         // Add C0 to the transcript
         transcript.addPolCommitment(zkey.C0);
@@ -14879,7 +15017,7 @@ async function fflonkProve(zkeyFileName, witnessFileName, logger) {
     async function round3() {
         if (logger) logger.info("> Computing challenge xi");
         // STEP 3.1 - Compute evaluation challenge xi ∈ S
-        const transcript = new Keccak256Transcript(curve);
+        const transcript = new Blake3Transcript(curve);
         transcript.addScalar(challenges.gamma);
         transcript.addPolCommitment(proof.getPolynomial("C2"));
 
@@ -14980,7 +15118,7 @@ async function fflonkProve(zkeyFileName, witnessFileName, logger) {
     async function round4() {
         if (logger) logger.info("> Computing challenge alpha");
         // STEP 4.1 - Compute challenge alpha ∈ F
-        const transcript = new Keccak256Transcript(curve);
+        const transcript = new Blake3Transcript(curve);
         transcript.addScalar(challenges.xiSeed);
         transcript.addScalar(proof.getEvaluation("ql"));
         transcript.addScalar(proof.getEvaluation("qr"));
@@ -15107,7 +15245,7 @@ async function fflonkProve(zkeyFileName, witnessFileName, logger) {
         if (logger) logger.info("> Computing challenge y");
 
         // STEP 5.1 - Compute random evaluation point y ∈ F
-        const transcript = new Keccak256Transcript(curve);
+        const transcript = new Blake3Transcript(curve);
         transcript.addScalar(challenges.alpha);
         transcript.addPolCommitment(proof.getPolynomial("W1"));
 
@@ -15558,7 +15696,7 @@ function computeChallenges(curve, proof, vk, publicSignals, logger) {
 
     const challenges = {};
     const roots = {};
-    const transcript = new Keccak256Transcript(curve);
+    const transcript = new Blake3Transcript(curve);
 
     // Add C0 to the transcript
     transcript.addPolCommitment(vk.C0);

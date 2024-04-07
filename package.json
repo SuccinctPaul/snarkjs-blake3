@@ -64,6 +64,7 @@
     "fastfile": "0.0.20",
     "ffjavascript": "0.2.63",
     "js-sha3": "^0.8.0",
+    "blake3": "2.1.7",
     "logplease": "^1.2.15",
     "r1csfile": "0.0.47"
   },

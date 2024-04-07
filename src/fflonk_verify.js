@@ -20,7 +20,7 @@
 import * as curves from "./curves.js";
 import { BigBuffer, utils } from "ffjavascript";
 import { Proof } from "./proof.js";
-import { Keccak256Transcript } from "./Keccak256Transcript.js";
+import { Blake3Transcript } from "./Blake3Transcript.js";
 import { Scalar } from "ffjavascript";
 
 const { unstringifyBigInts } = utils;
@@ -200,7 +200,7 @@ function computeChallenges(curve, proof, vk, publicSignals, logger) {
 
     const challenges = {};
     const roots = {};
-    const transcript = new Keccak256Transcript(curve);
+    const transcript = new Blake3Transcript(curve);
 
     // Add C0 to the transcript
     transcript.addPolCommitment(vk.C0);
