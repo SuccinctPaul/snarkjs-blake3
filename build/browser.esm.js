@@ -14207,6 +14207,9 @@ class Blake3Transcript {
             }
         }
 
+        console.log("Blake3 input: " + Buffer.from(buffer).toString("hex"));
+        console.log("Blake3 output: " +hash(buffer).toString("hex"));
+
         const value = Scalar.fromRprBE(hash(buffer));
         return this.Fr.e(value);
     }
@@ -14235,6 +14238,12 @@ const { stringifyBigInts } = utils;
 
 
 async function fflonkProve(zkeyFileName, witnessFileName, logger) {
+    if (process.env.USE_FIXED_RANDOMNESS) {
+        if (logger) {
+            logger.warn("FFLONK is going to use fixed randomness for the proof generation. This means that the proof is not zero-knowledge.");
+        }
+    }
+
     if (logger) logger.info("FFLONK PROVER STARTED");
 
     // Read witness file
@@ -14504,8 +14513,14 @@ async function fflonkProve(zkeyFileName, witnessFileName, logger) {
     async function round1() {
         // STEP 1.1 - Generate random blinding scalars (b_1, ..., b9) ∈ F
         challenges.b = [];
-        for (let i = 1; i <= 9; i++) {
-            challenges.b[i] = Fr.random();
+        if (process.env.USE_FIXED_RANDOMNESS) {
+            for (let i = 1; i <= 9; i++) {
+                challenges.b[i] = Fr.one;
+            }
+        } else {
+            for (let i = 1; i <= 9; i++) {
+                challenges.b[i] = Fr.random();
+            }
         }
 
         // STEP 1.2 - Compute wire polynomials a(X), b(X) and c(X)
