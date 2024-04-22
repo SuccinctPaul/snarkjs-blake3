@@ -52,6 +52,7 @@ export class Blake3Transcript {
         console.log("Blake3 output: " +hash(buffer).toString("hex"));
 
         const value = Scalar.fromRprBE(hash(buffer));
+        console.log("Blake3 output as a field element: " + this.Fr.toString(this.Fr.e(value)));
         return this.Fr.e(value);
     }
 }

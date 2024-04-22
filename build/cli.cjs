@@ -10345,6 +10345,7 @@ class Blake3Transcript {
         console.log("Blake3 output: " +blake3.hash(buffer).toString("hex"));
 
         const value = ffjavascript.Scalar.fromRprBE(blake3.hash(buffer));
+        console.log("Blake3 output as a field element: " + this.Fr.toString(this.Fr.e(value)));
         return this.Fr.e(value);
     }
 }
@@ -11227,6 +11228,22 @@ async function fflonkProve$1(zkeyFileName, witnessFileName, logger) {
         // Compute xi = xi_seeder^24
         challenges.xi = Fr.mul(Fr.square(roots.S2.h2w3[0]), roots.S2.h2w3[0]);
 
+        if (logger) {
+            for(let i = 0; i < 8; i++) {
+                logger.info("··· roots.S0.h0w8[" + i + "]:  " + Fr.toString(roots.S0.h0w8[i]));
+            }
+            for(let i = 0; i < 4; i++) {
+                logger.info("··· roots.S1.h1w4[" + i + "]:  " + Fr.toString(roots.S1.h1w4[i]));
+            }
+            for(let i = 0; i < 3; i++) {
+                logger.info("··· roots.S2.h2w3[" + i + "]:  " + Fr.toString(roots.S2.h2w3[i]));
+            }
+            for(let i = 0; i < 3; i++) {
+                logger.info("··· roots.S2.h3w3[" + i + "]:  " + Fr.toString(roots.S2.h3w3[i]));
+            }
+            logger.info("··· challenges.xi:    " + Fr.toString(challenges.xi));
+        }
+
         if (logger) logger.info("··· challenges.xi: " + Fr.toString(challenges.xi));
 
         // Reserve memory for Q's polynomials
@@ -11262,6 +11279,8 @@ async function fflonkProve$1(zkeyFileName, witnessFileName, logger) {
         proof.addEvaluation("zw", polynomials.Z.evaluate(challenges.xiw));
         proof.addEvaluation("t1w", polynomials.T1.evaluate(challenges.xiw));
         proof.addEvaluation("t2w", polynomials.T2.evaluate(challenges.xiw));
+
+        if(logger) logger.info("··· challenges.xiw:    " + Fr.toString(challenges.xiw));
     }
 
     async function round4() {
@@ -11519,6 +11538,9 @@ async function fflonkProve$1(zkeyFileName, witnessFileName, logger) {
         for (let i = 0; i < zkey.power; i++) {
             xiN = Fr.square(xiN);
         }
+
+        if(logger) logger.info("··· challenges.xiN:    " + Fr.toString(xiN));
+
         toInverse["zh"] = Fr.sub(xiN, Fr.one);
 
         //   · denominator needed in step 10 and 11 of the verifier
