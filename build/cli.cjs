@@ -11787,16 +11787,22 @@ async function fflonkVerify$1(_vk_verifier, _publicSignals, _proof, logger) {
     const r2 = computeR2(proof, challenges, roots, lagrangeEvals[1], vk, curve, logger);
 
     if (logger) logger.info("> Computing F");
-    const F = computeF(curve, proof, vk, challenges, roots);
+    const F = computeF(curve, proof, vk, challenges, roots, logger);
 
     if (logger) logger.info("> Computing E");
-    const E = computeE(curve, proof, challenges, vk, r0, r1, r2);
+    const E = computeE(curve, proof, challenges, vk, r0, r1, r2, logger);
 
     if (logger) logger.info("> Computing J");
-    const J = computeJ(curve, proof, challenges);
+    const J = computeJ(curve, proof, challenges, logger);
+
+    if (logger) {
+        logger.info("F = " + curve.G1.toString(F));
+        logger.info("E = " + curve.G1.toString(E));
+        logger.info("J = " + curve.G1.toString(J));
+    }
 
     if (logger) logger.info("> Validate all evaluations with a pairing");
-    const res = await isValidPairing(curve, proof, challenges, vk, F, E, J);
+    const res = await isValidPairing(curve, proof, challenges, vk, F, E, J, logger);
 
     if (logger) {
         if (res) {
@@ -12175,7 +12181,7 @@ function computeR2(proof, challenges, roots, lagrange1, vk, curve, logger) {
     return res;
 }
 
-function computeF(curve, proof, vk, challenges, roots) {
+function computeF(curve, proof, vk, challenges, roots, logger) {
     const G1 = curve.G1;
     const Fr = curve.Fr;
 
@@ -12202,34 +12208,51 @@ function computeF(curve, proof, vk, challenges, roots) {
     challenges.quotient1 = Fr.mul(challenges.alpha, Fr.div(mulH0, mulH1));
     challenges.quotient2 = Fr.mul(Fr.square(challenges.alpha), Fr.div(mulH0, mulH2));
 
+    if (logger) {
+        logger.info("scalar for F: quotient1 = " + Fr.toString(challenges.quotient1));
+        logger.info("scalar for F: quotient2 = " + Fr.toString(challenges.quotient2));
+    }
+
     let F2 = G1.timesFr(proof.polynomials.C1, challenges.quotient1);
     let F3 = G1.timesFr(proof.polynomials.C2, challenges.quotient2);
 
     return G1.add(vk.C0, G1.add(F2, F3));
 }
 
-function computeE(curve, proof, challenges, vk, r0, r1, r2) {
+function computeE(curve, proof, challenges, vk, r0, r1, r2, logger) {
     const G1 = curve.G1;
     const Fr = curve.Fr;
 
     let E2 = Fr.mul(r1, challenges.quotient1);
     let E3 = Fr.mul(r2, challenges.quotient2);
 
+    if (logger) {
+        logger.info("scalar for E: " + Fr.toString(Fr.add(r0, Fr.add(E2, E3))));
+    }
+
     return G1.timesFr(G1.one, Fr.add(r0, Fr.add(E2, E3)));
 }
 
-function computeJ(curve, proof, challenges) {
+function computeJ(curve, proof, challenges, logger) {
     const G1 = curve.G1;
+
+    if (logger) {
+        logger.info("scalar for J: " + curve.Fr.toString(challenges.temp));
+    }
 
     return G1.timesFr(proof.polynomials.W1, challenges.temp);
 }
 
-async function isValidPairing(curve, proof, challenges, vk, F, E, J) {
+async function isValidPairing(curve, proof, challenges, vk, F, E, J, logger) {
     const G1 = curve.G1;
 
     let A1 = G1.timesFr(proof.polynomials.W2, challenges.y);
     A1 = G1.add(G1.sub(G1.sub(F, E), J), A1);
     const A2 = curve.G2.one;
+
+    if (logger) {
+        logger.info("A1 = " + G1.toString(A1));
+    }
 
     const B1 = proof.polynomials.W2;
     const B2 = vk.X_2;
