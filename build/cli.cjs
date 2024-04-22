@@ -10571,7 +10571,7 @@ async function fflonkProve$1(zkeyFileName, witnessFileName, logger) {
     await fdZKey.close();
     if (globalThis.gc) globalThis.gc();
 
-    proof.addEvaluation("inv", getMontgomeryBatchedInverse());
+    proof.addEvaluation("inv", getMontgomeryBatchedInverse(logger));
 
     // Prepare proof
     let _proof = proof.toObjectProof();
@@ -11532,7 +11532,7 @@ async function fflonkProve$1(zkeyFileName, witnessFileName, logger) {
         }
     }
 
-    function getMontgomeryBatchedInverse() {
+    function getMontgomeryBatchedInverse(logger) {
         //   · denominator needed in step 8 and 9 of the verifier to multiply by 1/Z_H(xi)
         let xiN = challenges.xi;
         for (let i = 0; i < zkey.power; i++) {
@@ -11560,6 +11560,12 @@ async function fflonkProve$1(zkeyFileName, witnessFileName, logger) {
         for (let i = 0; i < size; i++) {
             toInverse["Li_" + (i + 1)] = Fr.mul(Fr.e(zkey.domainSize), Fr.sub(challenges.xi, w));
             w = Fr.mul(w, Fr.w[zkey.power]);
+        }
+
+        if(logger) {
+            for (const [key, value] of Object.entries(toInverse)) {
+                logger.info("toInverse[" + key + "] = " + Fr.toString(value));
+            }
         }
 
         let mulAccumulator = Fr.one;
@@ -11759,11 +11765,14 @@ async function fflonkVerify$1(_vk_verifier, _publicSignals, _proof, logger) {
 
     // STEP 6 - Compute the lagrange polynomial evaluation L_1(xi)
     if (logger) logger.info("> Computing Lagrange evaluations");
-    const lagrangeEvals = await computeLagrangeEvaluations(curve, challenges, vk);
+    const lagrangeEvals = await computeLagrangeEvaluations(curve, challenges, vk, logger);
 
     // STEP 7 - Compute public input evaluation PI(xi)
     if (logger) logger.info("> Computing polynomial identities PI(X)");
     const pi = calculatePI(curve, publicSignals, lagrangeEvals);
+    if(logger) {
+        logger.info("PI = " + Fr.toString(pi));
+    }
 
     // STEP 8 - Compute polynomial r0 ∈ F_{<4}[X]
     if (logger) logger.info("> Computing r0(y)");
@@ -11985,7 +11994,7 @@ function computeChallenges(curve, proof, vk, publicSignals, logger) {
     return { challenges: challenges, roots: roots };
 }
 
-async function computeLagrangeEvaluations(curve, challenges, vk) {
+async function computeLagrangeEvaluations(curve, challenges, vk, logger) {
     const Fr = curve.Fr;
 
     const size = Math.max(1, vk.nPublic);
@@ -12007,6 +12016,13 @@ async function computeLagrangeEvaluations(curve, challenges, vk) {
         const i_sFr = i * Fr.n8;
         L[i + 1] = Fr.mul(numArr.slice(i_sFr, i_sFr + Fr.n8), denArr.slice(i_sFr, i_sFr + Fr.n8));
     }
+
+    if(logger) {
+        for (let i = 0; i < size; i++) {
+            logger.info("L[" + (i + 1) + "] = " + Fr.toString(L[i + 1]));
+        }
+    }
+
     return L;
 }
 
@@ -12050,6 +12066,10 @@ function computeR0(proof, challenges, roots, curve, logger) {
         res = Fr.add(res, Fr.mul(c0, Li[i]));
     }
 
+    if (logger) {
+        logger.info("R0 = " + Fr.toString(res));
+    }
+
     return res;
 }
 
@@ -12085,6 +12105,11 @@ function computeR1(proof, challenges, roots, pi, curve, logger) {
         c1 = Fr.add(c1, Fr.mul(Fr.mul(h1w4Squared, roots.S1.h1w4[i]), t0));
 
         res = Fr.add(res, Fr.mul(c1, Li[i]));
+    }
+
+
+    if (logger) {
+        logger.info("R1 = " + Fr.toString(res));
     }
 
     return res;
@@ -12141,6 +12166,10 @@ function computeR2(proof, challenges, roots, lagrange1, vk, curve, logger) {
         c2 = Fr.add(c2, Fr.mul(Fr.square(roots.S2.h3w3[i]), proof.evaluations.t2w));
 
         res = Fr.add(res, Fr.mul(c2, LiS2[i + 3]));
+    }
+
+    if (logger) {
+        logger.info("R2 = " + Fr.toString(res));
     }
 
     return res;

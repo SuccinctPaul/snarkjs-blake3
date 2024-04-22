@@ -247,7 +247,7 @@ export default async function fflonkProve(zkeyFileName, witnessFileName, logger)
     await fdZKey.close();
     if (globalThis.gc) globalThis.gc();
 
-    proof.addEvaluation("inv", getMontgomeryBatchedInverse());
+    proof.addEvaluation("inv", getMontgomeryBatchedInverse(logger));
 
     // Prepare proof
     let _proof = proof.toObjectProof();
@@ -1208,7 +1208,7 @@ export default async function fflonkProve(zkeyFileName, witnessFileName, logger)
         }
     }
 
-    function getMontgomeryBatchedInverse() {
+    function getMontgomeryBatchedInverse(logger) {
         //   · denominator needed in step 8 and 9 of the verifier to multiply by 1/Z_H(xi)
         let xiN = challenges.xi;
         for (let i = 0; i < zkey.power; i++) {
@@ -1236,6 +1236,12 @@ export default async function fflonkProve(zkeyFileName, witnessFileName, logger)
         for (let i = 0; i < size; i++) {
             toInverse["Li_" + (i + 1)] = Fr.mul(Fr.e(zkey.domainSize), Fr.sub(challenges.xi, w));
             w = Fr.mul(w, Fr.w[zkey.power]);
+        }
+
+        if(logger) {
+            for (const [key, value] of Object.entries(toInverse)) {
+                logger.info("toInverse[" + key + "] = " + Fr.toString(value));
+            }
         }
 
         let mulAccumulator = Fr.one;
