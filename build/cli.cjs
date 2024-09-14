@@ -11966,8 +11966,10 @@ function computeChallenges(curve, proof, vk, publicSignals, logger) {
     }
 
     transcript.reset();
-    logger.info("··· challenges.xiSeed:  " + Fr.toString(xiSeed));
-    logger.info("··· proof.evaluations.ql:  " + Fr.toString(proof.evaluations.ql));
+    if (logger) {
+        logger.info("··· challenges.xiSeed:  " + Fr.toString(xiSeed));
+        logger.info("··· proof.evaluations.ql:  " + Fr.toString(proof.evaluations.ql));
+    }
     transcript.addScalar(xiSeed);
     transcript.addScalar(proof.evaluations.ql);
     transcript.addScalar(proof.evaluations.qr);
