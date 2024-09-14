@@ -11168,17 +11168,13 @@ async function fflonkProve$1(zkeyFileName, witnessFileName, logger) {
         if (logger) logger.info("> Computing challenge xi");
         // STEP 3.1 - Compute evaluation challenge xi ∈ S
         const transcript = new Blake3Transcript(curve);
-        logger.info("··· compute xiSeed -> gamma:    " + Fr.toString(challenges.gamma));
         transcript.addScalar(challenges.gamma);
         transcript.addPolCommitment(proof.getPolynomial("C2"));
-        logger.info("··· compute xiSeed -> gamma:    " + proof.getPolynomial("C2"));
 
         // Obtain a xi_seeder from the transcript
         // To force h1^4 = xi, h2^3 = xi and h_3^2 = xiω
         // we compute xi = xi_seeder^12, h1 = xi_seeder^3, h2 = xi_seeder^4 and h3 = xi_seeder^6
         challenges.xiSeed = transcript.getChallenge();
-        logger.info("··· compute challenges.xiSeed:    " + Fr.toString(challenges.xiSeed));
-
         const xiSeed2 = Fr.square(challenges.xiSeed);
 
         // Compute omega8, omega4 and omega3
@@ -11970,6 +11966,8 @@ function computeChallenges(curve, proof, vk, publicSignals, logger) {
     }
 
     transcript.reset();
+    logger.info("··· challenges.xiSeed:  " + Fr.toString(xiSeed));
+    logger.info("··· proof.evaluations.ql:  " + Fr.toString(proof.evaluations.ql));
     transcript.addScalar(xiSeed);
     transcript.addScalar(proof.evaluations.ql);
     transcript.addScalar(proof.evaluations.qr);
