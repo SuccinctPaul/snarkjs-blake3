@@ -11901,6 +11901,11 @@ function computeChallenges(curve, proof, vk, publicSignals, logger) {
     transcript.reset();
     transcript.addScalar(challenges.gamma);
     transcript.addPolCommitment(proof.polynomials.C2);
+    if (logger) {
+        // logger.info("··· challenges.xiSeed:  " + Fr.toString(xiSeed));
+        logger.info("··· proof.evaluations.C2.x:  " + Fr.toString(proof.polynomials.C2.x));
+        logger.info("··· proof.evaluations.C2.y:  " + Fr.toString(proof.polynomials.C2.y));
+    }
     const xiSeed = transcript.getChallenge();
     const xiSeed2 = Fr.square(xiSeed);
 
