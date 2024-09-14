@@ -11892,6 +11892,13 @@ function computeChallenges(curve, proof, vk, publicSignals, logger) {
     }
 
     transcript.addPolCommitment(proof.polynomials.C1);
+    if (logger) {
+        logger.info("··· challenges.c0.x:  " + Fr.toString(vk.C0.x));
+        logger.info("··· challenges.c0.y:  " + Fr.toString(vk.C0.y));
+        logger.info("··· pub_input:  " + Fr.e(publicSignals[0]));
+        logger.info("··· challenges.c1.x:  " + Fr.toString(vk.C1.x));
+        logger.info("··· challenges.c1.y:  " + Fr.toString(vk.C2.y));
+    }
     challenges.beta = transcript.getChallenge();
     transcript.reset();
 
