@@ -35,7 +35,7 @@
     "buildesm": "BROWSER=true rollup -c config/rollup.browser.esm.config"
   },
   "bin": {
-    "snarkjs": "build/cli.cjs"
+    "snarkjs2": "build/cli.cjs"
   },
   "directories": {
     "templates": "templates"
