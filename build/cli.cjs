@@ -10344,6 +10344,7 @@ class Blake3Transcript {
             }
         }
 
+        console.log("Blake3 input: " + Buffer.from(buffer));
         console.log("Blake3 input: " + Buffer.from(buffer).toString("hex"));
         console.log("Blake3 output: " +blake3.hash(buffer).toString("hex"));
 
