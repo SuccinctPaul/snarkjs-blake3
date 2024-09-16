@@ -10331,12 +10331,12 @@ class Blake3Transcript {
         let buffer = new Uint8Array(nScalars * this.Fr.n8 + nPolynomials * this.G1.F.n8 * 2);
         let offset = 0;
         if (logger) {
-            logger.info("======Blake3TranscriptgetChallenge");
+            logger.debug("======Blake3TranscriptgetChallenge");
         }
         for (let i = 0; i < this.data.length; i++) {
             if (POLYNOMIAL === this.data[i].type) {
                 if (logger) {
-                    logger.info("Challenge.Point: " + this.G1.toString(this.data[i].data, 16));
+                    logger.debug("Challenge.Point: " + this.G1.toString(this.data[i].data, 16));
                 }
                 //this.G1.toRprCompressed(buffer, offset, this.data[i].data);
                 //offset += this.G1.F.n8;
@@ -10344,14 +10344,14 @@ class Blake3Transcript {
                 offset += this.G1.F.n8 * 2;
             } else {
                 if (logger) {
-                    logger.info("Challenge.Field: " + this.Fr.toString(this.data[i].data, 16));
+                    logger.debug("Challenge.Field: " + this.Fr.toString(this.data[i].data, 16));
                 }
                 this.Fr.toRprBE(buffer, offset, this.data[i].data);
                 offset += this.Fr.n8;
             }
         }
 
-        console.log("Blake3 input: " + Buffer.from(buffer).toString("hex"));
+        console.log("\nBlake3 input: " + Buffer.from(buffer).toString("hex"));
         console.log("Blake3 output: " +blake3.hash(buffer).toString("hex"));
 
         const value = ffjavascript.Scalar.fromRprBE(blake3.hash(buffer));
