@@ -11898,8 +11898,8 @@ function computeChallenges(curve, proof, vk, publicSignals, logger) {
         for (let i = 0; i < publicSignals.length; i++) {
            logger.info("··· pub_input:  " + Fr.e(publicSignals[i]));
         }
-        logger.info("··· challenges.c1.x:  " + Fr.toString(vk.C1.x));
-        logger.info("··· challenges.c1.y:  " + Fr.toString(vk.C1.y));
+        logger.info("··· challenges.c1.x:  " + Fr.toString(proof.polynomials.C1.x));
+        logger.info("··· challenges.c1.y:  " + Fr.toString(proof.polynomials.C1.y));
     }
     challenges.beta = transcript.getChallenge();
     transcript.reset();
