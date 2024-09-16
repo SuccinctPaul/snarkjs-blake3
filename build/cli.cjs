@@ -10338,8 +10338,10 @@ class Blake3Transcript {
                 if (logger) {
                     logger.info("Challenge.Point: " + this.G1.toString(this.data[i].data, 16));
                 }
-                this.G1.toRprCompressed(buffer, offset, this.data[i].data);
-                offset += this.G1.F.n8;
+                //this.G1.toRprCompressed(buffer, offset, this.data[i].data);
+                //offset += this.G1.F.n8;
+                this.G1.toRprUncompressed(buffer, offset, this.data[i].data);
+                offset += this.G1.F.n8 * 2;
             } else {
                 if (logger) {
                     logger.info("Challenge.Field: " + this.Fr.toString(this.data[i].data, 16));
