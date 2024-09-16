@@ -13863,8 +13863,11 @@ async function fflonkVerify(params, options) {
     const proof = JSON.parse(fs__default["default"].readFileSync(proofFilename, "utf8"));
     if (logger) {
         logger.info("----------------------------");
-        logger.info("proof: " + proof);
+        logger.info("proof: " + fs__default["default"].readFileSync(publicInputsFilename, "utf8"));
         logger.info("\n");
+        logger.info("public_input: " + fs__default["default"].readFileSync(vkeyFilename, "utf8"));
+        logger.info("\n");
+        logger.info("public_input: " + fs__default["default"].readFileSync(publicInputsFilename, "utf8"));
 
     }
     const isValid = await fflonkVerify$1(vkey, publicInputs, proof, logger);
