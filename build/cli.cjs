@@ -11850,6 +11850,7 @@ function commitmentsBelongToG1(curve, proof, vk) {
         logger.info("proof.polynomials.C2: " + G1.toString(G1.toAffine(proof.polynomials.C2), 16));
         logger.info("proof.polynomials.W1: " + G1.toString(G1.toAffine(proof.polynomials.W1), 16));
         logger.info("proof.polynomials.W2: " + G1.toString(G1.toAffine(proof.polynomials.W2), 16));
+        logger.info("vk.C0: " + G1.toString(G1.toAffine(vk.C0), 16));
     }
     return G1.isValid(proof.polynomials.C1)
         && G1.isValid(proof.polynomials.C2)
