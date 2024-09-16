@@ -10328,20 +10328,30 @@ class Blake3Transcript {
         this.data.forEach(element => POLYNOMIAL === element.type ? nPolynomials++ : nScalars++);
 
         // modification: use the compressed representation
-        let buffer = new Uint8Array(nScalars * this.Fr.n8 + nPolynomials * this.G1.F.n8);
+        let buffer = new Uint8Array(nScalars * this.Fr.n8 + nPolynomials * this.G1.F.n8 * 2);
         let offset = 0;
-
+        if (logger) {
+            logger.debug("======Blake3TranscriptgetChallenge");
+        }
         for (let i = 0; i < this.data.length; i++) {
             if (POLYNOMIAL === this.data[i].type) {
-                this.G1.toRprCompressed(buffer, offset, this.data[i].data);
-                offset += this.G1.F.n8;
+                if (logger) {
+                    logger.debug("Challenge.Point: " + this.G1.toString(this.data[i].data, 16));
+                }
+                //this.G1.toRprCompressed(buffer, offset, this.data[i].data);
+                //offset += this.G1.F.n8;
+                this.G1.toRprUncompressed(buffer, offset, this.data[i].data);
+                offset += this.G1.F.n8 * 2;
             } else {
+                if (logger) {
+                    logger.debug("Challenge.Field: " + this.Fr.toString(this.data[i].data, 16));
+                }
                 this.Fr.toRprBE(buffer, offset, this.data[i].data);
                 offset += this.Fr.n8;
             }
         }
 
-        console.log("Blake3 input: " + Buffer.from(buffer).toString("hex"));
+        console.log("\nBlake3 input: " + Buffer.from(buffer).toString("hex"));
         console.log("Blake3 output: " +blake3.hash(buffer).toString("hex"));
 
         const value = ffjavascript.Scalar.fromRprBE(blake3.hash(buffer));
@@ -11755,9 +11765,15 @@ async function fflonkVerify$1(_vk_verifier, _publicSignals, _proof, logger) {
 
     // STEP 4 - Compute the challenges: beta, gamma, xi, alpha and y ∈ F
     // as in prover description, from the common preprocessed inputs, public inputs and elements of π_SNARK
-    if (logger) logger.info("> Computing challenges");
+    if (logger) {
+        logger.info("\n\n\n----------------------------");
+        logger.info("> Computing challenges");
+    }
     const { challenges, roots } = computeChallenges(curve, proof, vk, publicSignals, logger);
-
+    if (logger) {
+        logger.info("> Computing challenges Finished");
+        logger.info("\n\n\n----------------------------");
+    }
     // STEP 5 - Compute the zero polynomial evaluation Z_H(xi) = xi^n - 1
     if (logger) logger.info("> Computing Zero polynomial evaluation Z_H(xi)");
     challenges.zh = Fr.sub(challenges.xiN, Fr.one);
@@ -11835,6 +11851,14 @@ function fromObjectVk(curve, vk) {
 
 function commitmentsBelongToG1(curve, proof, vk) {
     const G1 = curve.G1;
+    if (logger) {
+        logger.info("debug_commitmentsBelongToG1");
+        logger.info("proof.polynomials.C1: " + G1.toString(G1.toAffine(proof.polynomials.C1), 16));
+        logger.info("proof.polynomials.C2: " + G1.toString(G1.toAffine(proof.polynomials.C2), 16));
+        logger.info("proof.polynomials.W1: " + G1.toString(G1.toAffine(proof.polynomials.W1), 16));
+        logger.info("proof.polynomials.W2: " + G1.toString(G1.toAffine(proof.polynomials.W2), 16));
+        logger.info("vk.C0: " + G1.toString(G1.toAffine(vk.C0), 16));
+    }
     return G1.isValid(proof.polynomials.C1)
         && G1.isValid(proof.polynomials.C2)
         && G1.isValid(proof.polynomials.W1)
@@ -11893,6 +11917,18 @@ function computeChallenges(curve, proof, vk, publicSignals, logger) {
 
     transcript.addPolCommitment(proof.polynomials.C1);
     challenges.beta = transcript.getChallenge();
+    if (logger) {
+        logger.info("=== challenges.beta:  ");
+        logger.info("··· challenges.c0.x:  " + Fr.toString(vk.C0.x));
+        logger.info("··· challenges.c0.y:  " + Fr.toString(vk.C0.y));
+        for (let i = 0; i < publicSignals.length; i++) {
+            logger.info("··· pub_input:  " + publicSignals[i]);
+            logger.info("··· pub_input:  " + Fr.e(publicSignals[i]));
+        }
+        logger.info("··· challenges.c1.x:  " + Fr.toString(proof.polynomials.C1.x));
+        logger.info("··· challenges.c1.y:  " + Fr.toString(proof.polynomials.C1.y));
+        logger.info("··· challenges.beta:  " + Fr.toString(challenges.beta));
+    }
     transcript.reset();
 
     transcript.addScalar(challenges.beta);
@@ -11902,6 +11938,9 @@ function computeChallenges(curve, proof, vk, publicSignals, logger) {
     transcript.addScalar(challenges.gamma);
     transcript.addPolCommitment(proof.polynomials.C2);
     const xiSeed = transcript.getChallenge();
+    if (logger) {
+        logger.info("··· challenges.xiSeed:  " + Fr.toString(xiSeed));
+    }
     const xiSeed2 = Fr.square(xiSeed);
 
     let w8 = [];
@@ -11966,6 +12005,10 @@ function computeChallenges(curve, proof, vk, publicSignals, logger) {
     }
 
     transcript.reset();
+    if (logger) {
+        logger.info("··· challenges.xiSeed:  " + Fr.toString(xiSeed));
+        logger.info("··· proof.evaluations.ql:  " + Fr.toString(proof.evaluations.ql));
+    }
     transcript.addScalar(xiSeed);
     transcript.addScalar(proof.evaluations.ql);
     transcript.addScalar(proof.evaluations.qr);
@@ -13840,7 +13883,17 @@ async function fflonkVerify(params, options) {
     const vkey = JSON.parse(fs__default["default"].readFileSync(vkeyFilename, "utf8"));
     const publicInputs = JSON.parse(fs__default["default"].readFileSync(publicInputsFilename, "utf8"));
     const proof = JSON.parse(fs__default["default"].readFileSync(proofFilename, "utf8"));
+    if (logger) {
+        // logger.info("------------ proof");
+        // logger.info("proof: " + fs__default["default"].readFileSync(proofFilename, "utf8"));
+        // logger.info("\n");
+        // logger.info("vk: " + fs__default["default"].readFileSync(vkeyFilename, "utf8"));
+        // logger.info("------------ vk");
+        // logger.info("public_input: " + fs__default["default"].readFileSync(publicInputsFilename, "utf8"));
+        // logger.info("\n");
+        // logger.info("\n");
 
+    }
     const isValid = await fflonkVerify$1(vkey, publicInputs, proof, logger);
 
     return isValid ? 0 : 1;

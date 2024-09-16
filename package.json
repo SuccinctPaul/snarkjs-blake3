@@ -1,5 +1,5 @@
 {
-  "name": "snarkjs",
+  "name": "snarkjs2",
   "type": "module",
   "version": "0.7.3",
   "description": "zkSNARKs implementation in JavaScript",
