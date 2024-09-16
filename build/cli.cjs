@@ -10328,7 +10328,7 @@ class Blake3Transcript {
         this.data.forEach(element => POLYNOMIAL === element.type ? nPolynomials++ : nScalars++);
 
         // modification: use the compressed representation
-        let buffer = new Uint8Array(nScalars * this.Fr.n8 + nPolynomials * this.G1.F.n8);
+        let buffer = new Uint8Array(nScalars * this.Fr.n8 + nPolynomials * this.G1.F.n8 * 2);
         let offset = 0;
         if (logger) {
             logger.info("======Blake3TranscriptgetChallenge");
