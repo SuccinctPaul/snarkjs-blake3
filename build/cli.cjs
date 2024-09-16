@@ -10334,7 +10334,7 @@ class Blake3Transcript {
         for (let i = 0; i < this.data.length; i++) {
             if (POLYNOMIAL === this.data[i].type) {
                 if (logger) {
-                    logger.debug("Challenge.Point: " + G1.toString(this.data[i].data, 16));
+                    logger.debug("Challenge.Point: " + this.G1.toString(this.data[i].data, 16));
                 }
                 this.G1.toRprCompressed(buffer, offset, this.data[i].data);
                 offset += this.G1.F.n8;
