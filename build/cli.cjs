@@ -11835,6 +11835,13 @@ function fromObjectVk(curve, vk) {
 
 function commitmentsBelongToG1(curve, proof, vk) {
     const G1 = curve.G1;
+    if (logger) {
+        logger.info("debug_commitmentsBelongToG1");
+        logger.info("proof.polynomials.C1: " + G1.toString(G1.toAffine(proof.polynomials.C1), 16));
+        logger.info("proof.polynomials.C2: " + G1.toString(G1.toAffine(proof.polynomials.C2), 16));
+        logger.info("proof.polynomials.W1: " + G1.toString(G1.toAffine(proof.polynomials.W1), 16));
+        logger.info("proof.polynomials.W2: " + G1.toString(G1.toAffine(proof.polynomials.W2), 16));
+    }
     return G1.isValid(proof.polynomials.C1)
         && G1.isValid(proof.polynomials.C2)
         && G1.isValid(proof.polynomials.W1)
@@ -13862,12 +13869,17 @@ async function fflonkVerify(params, options) {
     const publicInputs = JSON.parse(fs__default["default"].readFileSync(publicInputsFilename, "utf8"));
     const proof = JSON.parse(fs__default["default"].readFileSync(proofFilename, "utf8"));
     if (logger) {
-        logger.info("----------------------------");
+        logger.info("------------ proof");
         logger.info("proof: " + fs__default["default"].readFileSync(proofFilename, "utf8"));
         logger.info("\n");
         logger.info("vk: " + fs__default["default"].readFileSync(vkeyFilename, "utf8"));
-        logger.info("\n");
+        logger.info("------------ vk");
         logger.info("public_input: " + fs__default["default"].readFileSync(publicInputsFilename, "utf8"));
+        logger.info("\n");
+        logger.info("------------ vk");
+        logger.info("··· challenges.c0.x:  " + Fr.toString(vkey.C0.x));
+        logger.info("··· challenges.c0.y:  " + Fr.toString(vkey.C0.y));
+        logger.info("\n");
 
     }
     const isValid = await fflonkVerify$1(vkey, publicInputs, proof, logger);
