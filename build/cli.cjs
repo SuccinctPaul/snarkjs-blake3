@@ -13861,7 +13861,10 @@ async function fflonkVerify(params, options) {
     const vkey = JSON.parse(fs__default["default"].readFileSync(vkeyFilename, "utf8"));
     const publicInputs = JSON.parse(fs__default["default"].readFileSync(publicInputsFilename, "utf8"));
     const proof = JSON.parse(fs__default["default"].readFileSync(proofFilename, "utf8"));
-
+    if (logger) {
+        logger.info("----------------------------");
+        logger.info("proof: " + proof);
+    }
     const isValid = await fflonkVerify$1(vkey, publicInputs, proof, logger);
 
     return isValid ? 0 : 1;
