@@ -11894,10 +11894,11 @@ function computeChallenges(curve, proof, vk, publicSignals, logger) {
     transcript.addPolCommitment(proof.polynomials.C1);
     challenges.beta = transcript.getChallenge();
     if (logger) {
-        logger.info("=== challenges.beta:  " + Fr.toString(vk.C0.x));
+        logger.info("=== challenges.beta:  ");
         logger.info("··· challenges.c0.x:  " + Fr.toString(vk.C0.x));
         logger.info("··· challenges.c0.y:  " + Fr.toString(vk.C0.y));
         for (let i = 0; i < publicSignals.length; i++) {
+            logger.info("··· pub_input:  " + publicSignals[i]);
             logger.info("··· pub_input:  " + Fr.e(publicSignals[i]));
         }
         logger.info("··· challenges.c1.x:  " + Fr.toString(proof.polynomials.C1.x));
