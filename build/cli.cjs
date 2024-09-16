@@ -10333,6 +10333,9 @@ class Blake3Transcript {
 
         for (let i = 0; i < this.data.length; i++) {
             if (POLYNOMIAL === this.data[i].type) {
+                if (logger) {
+                    logger.debug("Challenge.Point: " + G1.toString(this.data[i].data, 16));
+                }
                 this.G1.toRprCompressed(buffer, offset, this.data[i].data);
                 offset += this.G1.F.n8;
             } else {
@@ -11755,9 +11758,15 @@ async function fflonkVerify$1(_vk_verifier, _publicSignals, _proof, logger) {
 
     // STEP 4 - Compute the challenges: beta, gamma, xi, alpha and y ∈ F
     // as in prover description, from the common preprocessed inputs, public inputs and elements of π_SNARK
-    if (logger) logger.info("> Computing challenges");
+    if (logger) {
+        logger.info("\n\n\n----------------------------");
+        logger.info("> Computing challenges");
+    }
     const { challenges, roots } = computeChallenges(curve, proof, vk, publicSignals, logger);
-
+    if (logger) {
+        logger.info("> Computing challenges Finished");
+        logger.info("\n\n\n----------------------------");
+    }
     // STEP 5 - Compute the zero polynomial evaluation Z_H(xi) = xi^n - 1
     if (logger) logger.info("> Computing Zero polynomial evaluation Z_H(xi)");
     challenges.zh = Fr.sub(challenges.xiN, Fr.one);
