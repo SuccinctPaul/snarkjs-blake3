@@ -13864,6 +13864,8 @@ async function fflonkVerify(params, options) {
     if (logger) {
         logger.info("----------------------------");
         logger.info("proof: " + proof);
+        logger.info("\n");
+
     }
     const isValid = await fflonkVerify$1(vkey, publicInputs, proof, logger);
 
