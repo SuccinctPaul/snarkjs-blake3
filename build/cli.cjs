@@ -13876,9 +13876,6 @@ async function fflonkVerify(params, options) {
         logger.info("------------ vk");
         logger.info("public_input: " + fs__default["default"].readFileSync(publicInputsFilename, "utf8"));
         logger.info("\n");
-        logger.info("------------ vk");
-        logger.info("··· challenges.c0.x:  " + Fr.toString(vkey.C0.x));
-        logger.info("··· challenges.c0.y:  " + Fr.toString(vkey.C0.y));
         logger.info("\n");
 
     }
