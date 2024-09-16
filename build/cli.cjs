@@ -10330,7 +10330,9 @@ class Blake3Transcript {
         // modification: use the compressed representation
         let buffer = new Uint8Array(nScalars * this.Fr.n8 + nPolynomials * this.G1.F.n8);
         let offset = 0;
-
+        if (logger) {
+            logger.info("======Blake3TranscriptgetChallenge");
+        }
         for (let i = 0; i < this.data.length; i++) {
             if (POLYNOMIAL === this.data[i].type) {
                 if (logger) {
@@ -10339,12 +10341,14 @@ class Blake3Transcript {
                 this.G1.toRprCompressed(buffer, offset, this.data[i].data);
                 offset += this.G1.F.n8;
             } else {
+                if (logger) {
+                    logger.info("Challenge.Field: " + this.Fr.toString(this.data[i].data, 16));
+                }
                 this.Fr.toRprBE(buffer, offset, this.data[i].data);
                 offset += this.Fr.n8;
             }
         }
 
-        console.log("Blake3 input: " + Buffer.from(buffer).toString());
         console.log("Blake3 input: " + Buffer.from(buffer).toString("hex"));
         console.log("Blake3 output: " +blake3.hash(buffer).toString("hex"));
 
@@ -11931,12 +11935,10 @@ function computeChallenges(curve, proof, vk, publicSignals, logger) {
     transcript.reset();
     transcript.addScalar(challenges.gamma);
     transcript.addPolCommitment(proof.polynomials.C2);
-    if (logger) {
-        // logger.info("··· challenges.xiSeed:  " + Fr.toString(xiSeed));
-        logger.info("··· proof.evaluations.C2.x:  " + Fr.toString(proof.polynomials.C2.x));
-        logger.info("··· proof.evaluations.C2.y:  " + Fr.toString(proof.polynomials.C2.y));
-    }
     const xiSeed = transcript.getChallenge();
+    if (logger) {
+        logger.info("··· challenges.xiSeed:  " + Fr.toString(xiSeed));
+    }
     const xiSeed2 = Fr.square(xiSeed);
 
     let w8 = [];
